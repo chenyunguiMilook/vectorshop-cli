@@ -89,6 +89,22 @@ fi
 # ---- 5. 注册 Claude Code MCP server(Phase 2:取代 skill + permissions 白名单)----
 # 一次注册,设计全程零权限弹窗;Claude Code 里的工具名 mcp__vectorshop__*。
 # remove 先行保证幂等(add 遇同名报错);remove/add 必须同 scope(-s user:全局可用)。
+
+# 5.0 迁移:挪走 v0.1 装的旧 skill。旧 SKILL 的触发词会盖过 MCP 工具,Claude 照旧
+# shell CLI + 写中间文件 → 权限弹窗回归(v0.1→v0.2 升级实测踩过)。挪走备份而非删除,
+# 可回滚;测试用 VECTORSHOP_OLD_SKILL_DIR 指到临时目录,绝不动测试机真实 HOME。
+OLD_SKILL_DIR="${VECTORSHOP_OLD_SKILL_DIR:-$HOME/.claude/skills/vectorshop-design}"
+if [[ -d "$OLD_SKILL_DIR" ]]; then
+  if [[ "$DRY_RUN" -eq 1 ]]; then
+    say "[dry-run] 将挪走 v0.1 旧 skill(与 MCP 冲突): $OLD_SKILL_DIR → $INSTALL_ROOT/backup/"
+  else
+    mkdir -p "$INSTALL_ROOT/backup"
+    rm -rf "$INSTALL_ROOT/backup/skill-legacy-vectorshop-design"
+    mv "$OLD_SKILL_DIR" "$INSTALL_ROOT/backup/skill-legacy-vectorshop-design"
+    say "已挪走 v0.1 旧 Claude skill(会把 Claude 引回 shell 老流程)→ 备份在 $INSTALL_ROOT/backup/skill-legacy-vectorshop-design"
+  fi
+fi
+
 MCP_ADD_CMD="claude mcp add -s user vectorshop -- \"$BIN\" --mcp"
 
 if ! command -v claude >/dev/null 2>&1; then
