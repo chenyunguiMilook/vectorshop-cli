@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 # vectorshop 一行安装脚本（审计友好：curl 出来先读再跑）。
 #   curl -fsSL <BASE_URL>/install.sh | bash
-# 幂等。--dry-run 只打印不改盘;--yes 非交互自动同意写 permissions.allow。
+# 幂等。--dry-run 只打印不改盘;--yes 非交互自动同意注册 MCP server。
 set -euo pipefail
 
 # ---- 可配置量（环境变量可覆盖;真 URL 上线后填 BASE_URL 默认值即可）--------
 BASE_URL="${VECTORSHOP_BASE_URL:-https://github.com/chenyunguiMilook/vectorshop-cli/releases/latest/download}"
 INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.vectorshop}"
 BIN_LINK_DIR="${BIN_LINK_DIR:-/usr/local/bin}"
-CLAUDE_SKILLS_DIR="${CLAUDE_SKILLS_DIR:-$HOME/.claude/skills}"
-CLAUDE_SETTINGS="${CLAUDE_SETTINGS:-$HOME/.claude/settings.json}"
 
 DRY_RUN=0; ASSUME_YES=0
 for arg in "$@"; do
@@ -76,7 +74,7 @@ BIN="$INSTALL_ROOT/current/vectorshop"
 
 # ---- 4. 软链（无权限不 sudo,给兜底并继续）--------------------------------
 # 软链只是便利:进 PATH 后裸 `vectorshop` 能直接跑。建不成也不影响 Claude——
-# SKILL 会回退到绝对路径,且两条 allow 规则(裸名+绝对路径)都已授权(见第 6 步)。
+# MCP 注册(见第 5 步)用的是绝对路径,不依赖这个软链。
 if [[ "$DRY_RUN" -eq 1 ]]; then
   say "[dry-run] 将软链 $BIN → $BIN_LINK_DIR/vectorshop"
 elif mkdir -p "$BIN_LINK_DIR" 2>/dev/null && ln -sf "$BIN" "$BIN_LINK_DIR/vectorshop" 2>/dev/null; then
@@ -85,52 +83,42 @@ else
   say "提示: 无权限写 $BIN_LINK_DIR,未创建软链。想让裸 vectorshop 进 PATH,二选一手动:"
   say "  sudo ln -sf \"$BIN\" \"$BIN_LINK_DIR/vectorshop\""
   say "  或加进 shell 配置: export PATH=\"$INSTALL_ROOT/current:\$PATH\""
-  say "（不建也不影响 Claude:SKILL 回退绝对路径,裸名与绝对路径均已在免确认列表。）"
+  say "（不建也不影响 Claude:MCP 注册用的是绝对路径,软链只服务你手动在终端敲裸 vectorshop。）"
 fi
 
-# ---- 5. 装/更新 Claude Code skill ----------------------------------------
-# 总是 --force 重装:SKILL 是生成内容,注入的绝对路径必须指向**本次**安装的 binary。
-# 只在「已存在则跳过」会留下指向旧/陈旧 binary 的 SKILL(实测踩过:老 worktree debug 路径)。
-if [[ "$DRY_RUN" -eq 1 ]]; then
-  say "[dry-run] 将运行: vectorshop install-claude-skill --dir $CLAUDE_SKILLS_DIR --force"
+# ---- 5. 注册 Claude Code MCP server(Phase 2:取代 skill + permissions 白名单)----
+# 一次注册,设计全程零权限弹窗;Claude Code 里的工具名 mcp__vectorshop__*。
+# remove 先行保证幂等(add 遇同名报错);remove/add 必须同 scope(-s user:全局可用)。
+MCP_ADD_CMD="claude mcp add -s user vectorshop -- \"$BIN\" --mcp"
+
+if ! command -v claude >/dev/null 2>&1; then
+  say "提示: 未找到 claude 命令(Claude Code)。装好后手动注册:"
+  say "  $MCP_ADD_CMD"
+elif [[ "$DRY_RUN" -eq 1 ]]; then
+  say "[dry-run] 将注册 MCP: claude mcp remove -s user vectorshop; $MCP_ADD_CMD"
 else
-  "$BIN" install-claude-skill --dir "$CLAUDE_SKILLS_DIR" --force >/dev/null || die "安装 skill 失败。"
-  say "已安装/更新 Claude Code skill → $CLAUDE_SKILLS_DIR/vectorshop-design/（指向本次 binary）"
-fi
-
-# ---- 6. permissions.allow（consent-gated）--------------------------------
-# 两条都授权:SKILL 命令示例用**裸** `vectorshop`(PATH 找不到时才回退到绝对路径),
-# 所以裸名必须也在白名单——否则每条裸 `vectorshop` 命令都弹确认(实测:软链没建成 +
-# 只授权绝对路径时,裸命令仍逐条弹)。绝对路径覆盖回退调用。裸名即便没进 PATH 也无害。
-RULES=(--rule "Bash($BIN:*)" --rule "Bash(vectorshop:*)")
-
-consent=0
-if [[ "$DRY_RUN" -eq 1 ]]; then
   consent=0
-elif [[ "$ASSUME_YES" -eq 1 ]]; then
-  consent=1
-elif [[ -r /dev/tty ]]; then
-  printf '把 vectorshop 加进 Claude Code 免确认列表(%s)？Claude 调用本工具将不再逐条弹确认。[y/N] ' \
-    "$CLAUDE_SETTINGS" > /dev/tty
-  read -r reply < /dev/tty || reply=""
-  case "$reply" in y|Y|yes|YES) consent=1 ;; esac
-fi
-
-if [[ "$DRY_RUN" -eq 1 ]]; then
-  say "[dry-run] 征得同意后将写入 $CLAUDE_SETTINGS: ${RULES[*]}"
-elif [[ "$consent" -eq 1 ]]; then
-  if "$BIN" configure-claude-permissions --settings "$CLAUDE_SETTINGS" "${RULES[@]}" >/dev/null; then
-    say "已更新 permissions.allow。"
-  else
-    say "更新 permissions.allow 失败(不影响安装);可手动加: Bash($BIN:*)"
+  if [[ "$ASSUME_YES" -eq 1 ]]; then
+    consent=1
+  elif [[ -r /dev/tty ]]; then
+    printf '把 vectorshop 注册成 Claude Code 的 MCP server(scope: user)?注册后说「做一张海报」即可全程免弹窗出图。[y/N] ' > /dev/tty
+    read -r reply < /dev/tty || reply=""
+    case "$reply" in y|Y|yes|YES) consent=1 ;; esac
   fi
-else
-  say "未修改 permissions.allow。想让 Claude 免确认调用,手动加进 $CLAUDE_SETTINGS 的 permissions.allow:"
-  say "  Bash($BIN:*)"
+  if [[ "$consent" -eq 1 ]]; then
+    claude mcp remove -s user vectorshop >/dev/null 2>&1 || true
+    if claude mcp add -s user vectorshop -- "$BIN" --mcp >/dev/null; then
+      say "已注册 MCP server(scope: user)。"
+    else
+      say "注册失败(不影响安装);可手动: $MCP_ADD_CMD"
+    fi
+  else
+    say "未注册。想启用,手动运行: $MCP_ADD_CMD"
+  fi
 fi
 
 # ---- 完成 ----------------------------------------------------------------
 say ""
-say "完成 ✅  在 Claude Code 里说「帮我做一张咖啡店海报」即可。"
+say "完成 ✅  在 Claude Code 里说「帮我做一张咖啡店海报」即可(工具名 mcp__vectorshop__*)。"
 [[ "$DRY_RUN" -eq 1 ]] && say "（以上为 --dry-run,未改动任何文件。）"
 exit 0

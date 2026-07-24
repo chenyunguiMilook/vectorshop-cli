@@ -14,8 +14,10 @@ curl -fsSL https://raw.githubusercontent.com/chenyunguiMilook/vectorshop-cli/mai
 ```
 
 它会：下载校验最新版 → 装到 `~/.vectorshop/current` → 软链到 `/usr/local/bin`
-（无权限时给 PATH 兜底）→ 安装 Claude Code 技能 → **征得你同意后**把 `vectorshop`
-加进 Claude 的免确认列表。之后在 Claude Code 里说一句需求即可。
+（无权限时给 PATH 兜底）→ **征得你同意后**注册成 Claude Code 的 MCP server
+（工具名 `mcp__vectorshop__*`）。一次注册,之后设计全程**零权限弹窗**——Claude
+直接调工具写 DSL、**当场看内联渲染图**迭代,满意才落盘交付。在 Claude Code 里
+说一句需求即可。
 
 - 先看它会做什么、不落任何盘：加 `--dry-run`
 - 非交互一路同意：加 `--yes`
@@ -35,4 +37,8 @@ curl -fsSL https://raw.githubusercontent.com/chenyunguiMilook/vectorshop-cli/mai
 
 到 [Releases](https://github.com/chenyunguiMilook/vectorshop-cli/releases/latest) 下
 `vectorshop-cli-macos-arm64.tar.gz`，解压后整目录运行 `./vectorshop --help`
-（二进制与同目录的 `*.bundle` 资源是一个整体，勿单独移动）。
+（二进制与同目录的 `*.bundle` 资源是一个整体，勿单独移动）。手动注册 MCP：
+
+```bash
+claude mcp add -s user vectorshop -- "$PWD/vectorshop" --mcp
+```
