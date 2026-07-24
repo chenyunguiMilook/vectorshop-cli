@@ -75,34 +75,34 @@ fi
 BIN="$INSTALL_ROOT/current/vectorshop"
 
 # ---- 4. 软链（无权限不 sudo,给兜底并继续）--------------------------------
-ON_PATH=0
+# 软链只是便利:进 PATH 后裸 `vectorshop` 能直接跑。建不成也不影响 Claude——
+# SKILL 会回退到绝对路径,且两条 allow 规则(裸名+绝对路径)都已授权(见第 6 步)。
 if [[ "$DRY_RUN" -eq 1 ]]; then
   say "[dry-run] 将软链 $BIN → $BIN_LINK_DIR/vectorshop"
-  ON_PATH=1
 elif mkdir -p "$BIN_LINK_DIR" 2>/dev/null && ln -sf "$BIN" "$BIN_LINK_DIR/vectorshop" 2>/dev/null; then
   say "已软链: $BIN_LINK_DIR/vectorshop"
-  case ":$PATH:" in *":$BIN_LINK_DIR:"*) ON_PATH=1 ;; esac
 else
-  say "提示: 无权限写 $BIN_LINK_DIR,未创建软链。二选一手动处理:"
+  say "提示: 无权限写 $BIN_LINK_DIR,未创建软链。想让裸 vectorshop 进 PATH,二选一手动:"
   say "  sudo ln -sf \"$BIN\" \"$BIN_LINK_DIR/vectorshop\""
   say "  或加进 shell 配置: export PATH=\"$INSTALL_ROOT/current:\$PATH\""
-  say "（不影响 Claude 使用:技能里写的是绝对路径。）"
+  say "（不建也不影响 Claude:SKILL 回退绝对路径,裸名与绝对路径均已在免确认列表。）"
 fi
 
-# ---- 5. 装 Claude Code skill ---------------------------------------------
+# ---- 5. 装/更新 Claude Code skill ----------------------------------------
+# 总是 --force 重装:SKILL 是生成内容,注入的绝对路径必须指向**本次**安装的 binary。
+# 只在「已存在则跳过」会留下指向旧/陈旧 binary 的 SKILL(实测踩过:老 worktree debug 路径)。
 if [[ "$DRY_RUN" -eq 1 ]]; then
-  say "[dry-run] 将运行: vectorshop install-claude-skill --dir $CLAUDE_SKILLS_DIR"
-elif [[ -f "$CLAUDE_SKILLS_DIR/vectorshop-design/SKILL.md" ]]; then
-  say "skill 已存在,跳过。"
+  say "[dry-run] 将运行: vectorshop install-claude-skill --dir $CLAUDE_SKILLS_DIR --force"
 else
-  "$BIN" install-claude-skill --dir "$CLAUDE_SKILLS_DIR" >/dev/null || die "安装 skill 失败。"
-  say "已安装 Claude Code skill → $CLAUDE_SKILLS_DIR/vectorshop-design/"
+  "$BIN" install-claude-skill --dir "$CLAUDE_SKILLS_DIR" --force >/dev/null || die "安装 skill 失败。"
+  say "已安装/更新 Claude Code skill → $CLAUDE_SKILLS_DIR/vectorshop-design/（指向本次 binary）"
 fi
 
 # ---- 6. permissions.allow（consent-gated）--------------------------------
-# 始终授权绝对路径（匹配 SKILL 注入）;在 PATH 时额外授权裸 vectorshop。
-RULES=(--rule "Bash($BIN:*)")
-[[ "$ON_PATH" -eq 1 ]] && RULES+=(--rule "Bash(vectorshop:*)")
+# 两条都授权:SKILL 命令示例用**裸** `vectorshop`(PATH 找不到时才回退到绝对路径),
+# 所以裸名必须也在白名单——否则每条裸 `vectorshop` 命令都弹确认(实测:软链没建成 +
+# 只授权绝对路径时,裸命令仍逐条弹)。绝对路径覆盖回退调用。裸名即便没进 PATH 也无害。
+RULES=(--rule "Bash($BIN:*)" --rule "Bash(vectorshop:*)")
 
 consent=0
 if [[ "$DRY_RUN" -eq 1 ]]; then
