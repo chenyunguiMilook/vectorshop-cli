@@ -23,10 +23,11 @@ Claude Code 里直接说「帮我做一张咖啡店海报」，Claude 会自己�
 （首跑多等十几秒，仅此一次）。之后说一句「帮我做一张海报」即可——Claude 直接调
 MCP 工具写 DSL、**当场看内联渲染图**迭代，满意才落盘交付，设计全程**零权限弹窗**。
 
-> 零弹窗是怎么做到的：本插件自带一个 `PreToolUse` hook，只对自己的 4 个工具
-> （`list_categories`/`emit`/`render`/`export`）自动放行，不放宽任何其它权限、
-> 也不修改你的 `settings.json`，卸载插件即失效。其中前三个全内存只读，`export`
-> 会按对话里给出的路径写出 `.vsp`/`.png`/`.json` 三件套（目标已存在时拒绝覆盖）。
+> 零弹窗是怎么做到的：本插件自带一个 `PreToolUse` hook，只对自己的 6 个工具
+> （`list_categories`/`emit`/`get_example`/`get_skill`/`render`/`export`）自动放行，
+> 不放宽任何其它权限、也不修改你的 `settings.json`，卸载插件即失效。其中前五个
+> 全内存只读，`export` 会按对话里给出的路径写出 `.vsp`/`.png`/`.json` 三件套
+> （目标已存在时拒绝覆盖）。
 
 - **升级**：`/plugin update vectorshop-design@vectorshop-cli`（或在 `/plugin` →
   Marketplaces 里为本 marketplace 打开自动更新）；二进制在下一会话自动对齐。
