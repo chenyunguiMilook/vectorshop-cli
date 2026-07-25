@@ -1,0 +1,12 @@
+{
+  "name": "vectorshop-cli",
+  "description": "VectorShop CLI 官方 marketplace:AI 矢量设计工具(海报/菜单/名片),Claude Code 里说一句话零弹窗出图",
+  "owner": { "name": "chenyunguiMilook" },
+  "plugins": [
+    {
+      "name": "vectorshop-design",
+      "source": "./plugin",
+      "description": "VectorShop AI 设计工具:说「做一张海报」即可零弹窗出图(MCP 内联渲染)"
+    }
+  ]
+}

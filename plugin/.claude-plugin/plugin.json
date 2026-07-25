@@ -1,0 +1,6 @@
+{
+  "name": "vectorshop-design",
+  "version": "1.0.0",
+  "description": "VectorShop 设计 MCP server:list_categories/emit/render/export,渲染图内联返回",
+  "author": { "name": "chenyunguiMilook" }
+}

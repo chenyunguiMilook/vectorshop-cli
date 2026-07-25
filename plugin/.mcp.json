@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "vectorshop": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/scripts/vectorshop-mcp.sh"
+    }
+  }
+}

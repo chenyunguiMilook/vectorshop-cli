@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # vectorshop 一行安装脚本（审计友好：curl 出来先读再跑）。
+# 推荐改用 Claude Code Plugin 安装(README「安装方式一」);本脚本是不用 plugin 时的备选,功能不变。
 #   curl -fsSL <BASE_URL>/install.sh | bash
 # 幂等。--dry-run 只打印不改盘;--yes 非交互自动同意注册 MCP server。
 set -euo pipefail
@@ -35,6 +36,7 @@ TARBALL_URL="$BASE_URL/$TARBALL_NAME"
 SHA_URL="$TARBALL_URL.sha256"
 
 say "== vectorshop 安装 =="
+say "提示: 若你用 Claude Code,推荐改用 Plugin 安装(见 README);本脚本为备选路径。"
 say "架构: $ARCH   源: $TARBALL_URL"
 say "安装到: $INSTALL_ROOT/current"
 
