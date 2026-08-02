@@ -1,0 +1,11 @@
+{
+  "name": "vectorshop-cli",
+  "interface": { "displayName": "VectorShop CLI" },
+  "plugins": [
+    {
+      "name": "vectorshop-design",
+      "source": { "source": "local", "path": "./plugin" },
+      "category": "Productivity"
+    }
+  ]
+}
