@@ -1,17 +1,20 @@
 <!--
-  这是公开仓库 chenyunguiMilook/vectorshop-cli 根目录 README.md 的**源**——mono-repo 是真源,
-  与同目录的 .claude-plugin/ / .agents/ / plugin/ 一样,发版时整体拷进公开仓库 checkout。
-  它描述的是对外发行的产品,不是 scripts/plugin/ 这个目录本身。
-  中文孪生在 README.zh-CN.md,两份内容必须同步改。
+  This README ships by copy: the VectorShop repo holds the source, the public
+  vectorshop-cli repo holds the published copy. Edit the source — the next release
+  overwrites the copy. Chinese twin: README.zh-CN.md; keep both in sync.
 -->
 
 # vectorshop CLI
 
 **English** · [中文](README.zh-CN.md)
 
-Let **Claude Code** or **Codex** do vector design for you — posters, menus, business cards, banners. Install once, then just say "make me a poster for a coffee shop". The agent calls this tool to write DSL, render it, **look at the rendered image**, and iterate until it's right, producing a `.vsp` you can drag into VectorShop for further work.
+Let **Claude Code** or **Codex** do vector design for you — posters, menus, business cards, banners. Install once, then just say "make me a poster for a coffee shop". The agent calls this tool to write DSL, render it, **look at the rendered image**, and iterate until it's right, producing a `.vsp` you can drag into [VectorShop](https://vectorshop.app/) for further work.
 
-> For people who already have [Claude Code](https://claude.com/claude-code) or [Codex](https://developers.openai.com/codex) installed and signed in. If you don't write code at all, use the AI chat inside the VectorShop app instead.
+### Get VectorShop
+
+**[vectorshop.app](https://vectorshop.app/)** — the macOS app the `.vsp` files open in. This CLI is free and gives you a finished 1x PNG plus the editable `.vsp` source; refining that design by hand and exporting at 2x/3x happens in the app.
+
+> For people who already have [Claude Code](https://claude.com/claude-code) or [Codex](https://developers.openai.com/codex) installed and signed in. If you don't write code at all, skip this repo entirely and use the AI chat built into [the VectorShop app](https://vectorshop.app/).
 
 ## Install for Claude Code (plugin, recommended)
 

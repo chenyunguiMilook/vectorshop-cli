@@ -1,8 +1,7 @@
 <!--
-  这是公开仓库 chenyunguiMilook/vectorshop-cli 根目录 README.zh-CN.md 的**源**——mono-repo 是真源,
-  与同目录的 .claude-plugin/ / .agents/ / plugin/ 一样,发版时整体拷进公开仓库 checkout。
-  它描述的是对外发行的产品,不是 scripts/plugin/ 这个目录本身。
-  英文孪生(默认入口)在 README.md,两份内容必须同步改。
+  This README ships by copy: the VectorShop repo holds the source, the public
+  vectorshop-cli repo holds the published copy. Edit the source — the next release
+  overwrites the copy. English twin (default entry point): README.md; keep both in sync.
 -->
 
 # vectorshop CLI
@@ -11,11 +10,16 @@
 
 让 **Claude Code** 或 **Codex** 帮你做矢量设计（海报 / 菜单 / 名片 / banner …）：装一次，之后
 直接说「帮我做一张咖啡店海报」，它会自己调用本工具写 DSL、渲染、**看渲染图**、改到满意，
-产出可拖进 VectorShop 继续精修的 `.vsp`。
+产出可拖进 [VectorShop](https://vectorshop.app/) 继续精修的 `.vsp`。
+
+### 获取 VectorShop
+
+**[vectorshop.app](https://vectorshop.app/)** —— `.vsp` 文件用它打开的 macOS app。本 CLI 免费，
+出成品 1x PNG 和可编辑的 `.vsp` 源文件；把设计接手过来手工精修、导出 2x/3x 高清，在 app 里做。
 
 > 面向已安装并登录 [Claude Code](https://claude.com/claude-code) 或
-> [Codex](https://developers.openai.com/codex) 的用户。纯非技术用户请直接用 VectorShop
-> app 本体的 AI 聊天。
+> [Codex](https://developers.openai.com/codex) 的用户。纯非技术用户不必看这个仓库，
+> 直接用 [VectorShop app](https://vectorshop.app/) 本体的 AI 聊天即可。
 
 ## 安装方式一：Claude Code Plugin（推荐）
 
