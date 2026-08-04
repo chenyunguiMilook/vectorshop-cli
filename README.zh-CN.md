@@ -121,11 +121,12 @@ claude mcp add -s user vectorshop -- "$PWD/vectorshop" --mcp
 
 ## 仓库边界
 
-本仓库是 VectorShop agent plugin 公开发行层的唯一源：所有宿主清单、共享设计 Skill、plugin bootstrap/安装脚本、plugin 测试、文档和 Release SHA 都在这里维护。私有 VectorShop monorepo 负责 Swift 渲染引擎，以及签名、公证后的发行包构建；二进制发布到本仓库的 GitHub Releases，不提交进 Git 历史。
+本仓库是 VectorShop CLI 公开发行层的唯一源：standalone `install.sh`、所有宿主清单、共享设计 Skill、plugin bootstrap、发行测试、文档和 Release SHA 都在这里维护。私有 VectorShop monorepo 负责 Swift 渲染引擎，以及签名、公证后的发行包构建；二进制发布到本仓库的 GitHub Releases，不提交进 Git 历史。
 
 本地验证：
 
 ```bash
 python3 tests/check_manifests.py
+bash tests/test_install.sh
 bash tests/test_plugin.sh
 ```

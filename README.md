@@ -95,11 +95,12 @@ claude mcp add -s user vectorshop -- "$PWD/vectorshop" --mcp
 
 ## Repository boundary
 
-This repository is the source of truth for the public VectorShop agent-plugin delivery layer: all compatible host manifests, the shared design skill, plugin bootstrap/install scripts, plugin tests, documentation, and pinned release hashes live here. The private VectorShop monorepo owns the Swift renderer and produces signed, notarized release archives; binaries are published through this repository's GitHub Releases rather than committed to Git history.
+This repository is the source of truth for the public VectorShop CLI delivery layer: the standalone `install.sh`, compatible host manifests, shared design skill, plugin bootstrap scripts, delivery tests, documentation, and pinned release hashes live here. The private VectorShop monorepo owns the Swift renderer and produces signed, notarized release archives; binaries are published through this repository's GitHub Releases rather than committed to Git history.
 
 Run the delivery checks locally with:
 
 ```bash
 python3 tests/check_manifests.py
+bash tests/test_install.sh
 bash tests/test_plugin.sh
 ```

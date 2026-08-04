@@ -20,6 +20,10 @@ jobs:
         run: |
           bash -n plugins/vectorshop-design/scripts/ensure-vectorshop.sh
           bash -n plugins/vectorshop-design/scripts/vectorshop-mcp.sh
+          bash -n install.sh
+          bash -n tests/test_install.sh
           bash -n tests/test_plugin.sh
       - name: Run isolated installer and bootstrap smoke tests
-        run: bash tests/test_plugin.sh
+        run: |
+          bash tests/test_install.sh
+          bash tests/test_plugin.sh
