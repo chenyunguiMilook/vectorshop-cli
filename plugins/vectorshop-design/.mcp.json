@@ -1,8 +1,11 @@
 {
   "mcpServers": {
     "vectorshop": {
-      "command": "./scripts/vectorshop-mcp.sh",
-      "args": ["--host-agent"],
+      "command": "/bin/sh",
+      "args": [
+        "-c",
+        "if [ -n \"${CLAUDE_PLUGIN_ROOT:-}\" ]; then exec \"$CLAUDE_PLUGIN_ROOT/scripts/vectorshop-mcp.sh\"; else exec ./scripts/vectorshop-mcp.sh --host-agent; fi"
+      ],
       "cwd": ".",
       "startup_timeout_sec": 300,
       "default_tools_approval_mode": "auto"

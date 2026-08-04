@@ -44,6 +44,8 @@ Same first-run download (~34 MB to `~/.vectorshop/current`), and the same design
 
 ## Install for OpenClaw (plugin)
 
+The first command below is an optional read-only preview of the marketplace; it does not register persistent marketplace state. The install command consumes the repository directly through `--marketplace`.
+
 ```bash
 openclaw plugins marketplace list chenyunguiMilook/vectorshop-cli
 openclaw plugins install vectorshop-design --marketplace chenyunguiMilook/vectorshop-cli

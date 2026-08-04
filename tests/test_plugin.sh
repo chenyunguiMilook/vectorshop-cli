@@ -18,6 +18,7 @@ check() { if eval "$1"; then ok "$2"; else bad "$2"; fi; }
 
 cleanup_paths=()
 cleanup() {
+  (( ${#cleanup_paths[@]} )) || return 0
   local path
   for path in "${cleanup_paths[@]}"; do
     [[ ! -e "$path" ]] || rm -rf "$path"
@@ -90,22 +91,26 @@ check '[[ -x "$BIN" ]]' "pinned binary installed"
 check '[[ "$(cat "$VERSION_FILE")" == "9.9.9" ]]' "VERSION recorded"
 check '"$BIN" --help >/dev/null' "installed binary starts"
 
-echo "== OpenClaw bootstrap"
+echo "== shared agent bootstrap"
 INIT='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}'
 rm -rf "$INSTALL_ROOT/current"
-RESP="$(printf '%s\n' "$INIT" | bash "$BOOTSTRAP" --host-openclaw 2>/dev/null)"
-check 'grep -Fq "\"serverInfo\"" <<<"$RESP"' "first OpenClaw launch installs and handshakes"
+MCP_LAUNCHER="$(python3 -c 'import json; print(json.load(open("plugins/vectorshop-design/.mcp.json"))["mcpServers"]["vectorshop"]["args"][1])')"
+RESP="$(cd "$PLUGIN" && printf '%s\n' "$INIT" | /bin/sh -c "$MCP_LAUNCHER" 2>/dev/null)"
+check 'grep -Fq "\"serverInfo\"" <<<"$RESP"' "production --host-agent installs and handshakes"
 check '[[ "$(wc -l <<<"$RESP")" -eq 1 ]]' "MCP stdout contains one protocol line"
 
-echo "== OpenClaw host isolation"
+CLAUDE_RESP="$(cd "$WORK" && printf '%s\n' "$INIT" | CLAUDE_PLUGIN_ROOT="$REPO_ROOT/$PLUGIN" /bin/sh -c "$MCP_LAUNCHER" 2>/dev/null)"
+check 'grep -Fq "\"serverInfo\"" <<<"$CLAUDE_RESP"' "shared launcher uses CLAUDE_PLUGIN_ROOT outside plugin cwd"
+
+echo "== shared agent host isolation"
 : > "$CLAUDE_SHIM_LOG"
 mkdir -p "$VECTORSHOP_OLD_SKILL_DIR"
 printf 'legacy' > "$VECTORSHOP_OLD_SKILL_DIR/SKILL.md"
 printf '{"mcpServers":{"vectorshop":{"command":"%s"}}}' "$BIN" > "$VECTORSHOP_CLAUDE_JSON"
 printf '1.0.0' > "$VERSION_FILE"
-CLAUDE_SHIM_MCP_GET="vectorshop: $BIN --mcp (user)" VECTORSHOP_HOST=openclaw bash "$ENSURE"
-check '[[ ! -s "$CLAUDE_SHIM_LOG" ]]' "OpenClaw never mutates Claude registration"
-check '[[ -f "$VECTORSHOP_OLD_SKILL_DIR/SKILL.md" ]]' "OpenClaw leaves Claude legacy skill untouched"
+CLAUDE_SHIM_MCP_GET="vectorshop: $BIN --mcp (user)" VECTORSHOP_HOST=agent bash "$ENSURE"
+check '[[ ! -s "$CLAUDE_SHIM_LOG" ]]' "shared agent host never mutates Claude registration"
+check '[[ -f "$VECTORSHOP_OLD_SKILL_DIR/SKILL.md" ]]' "shared agent host leaves Claude legacy skill untouched"
 
 FAKE_ROOT="$(mktemp -d)"
 cleanup_paths+=("$FAKE_ROOT")
@@ -118,8 +123,8 @@ chmod +x "$FAKE_ROOT/current/vectorshop"
 printf '9.9.9' > "$FAKE_ROOT/current/VERSION"
 PLUGIN_DIR="$(cd "$PLUGIN" && pwd)"
 REAL_HOME="$(cd "$HOME" && pwd)"
-OPENCLAW_CWD="$(cd "$PLUGIN_DIR" && INSTALL_ROOT="$FAKE_ROOT" bash ./scripts/vectorshop-mcp.sh --host-openclaw </dev/null)"
-check '[[ "$OPENCLAW_CWD" == "$REAL_HOME" ]]' "OpenClaw exports never default into plugin cache"
+AGENT_CWD="$(cd "$PLUGIN_DIR" && INSTALL_ROOT="$FAKE_ROOT" bash ./scripts/vectorshop-mcp.sh --host-agent </dev/null)"
+check '[[ "$AGENT_CWD" == "$REAL_HOME" ]]' "shared agent exports never default into plugin cache"
 
 echo
 [[ "$FAIL" -eq 0 ]] && echo "ALL PASS" || echo "SOME FAILED"

@@ -63,6 +63,8 @@ MCP 工具调用免审批，所以这一侧**一个 hook 都不带**——没有
 
 ## 安装方式三：OpenClaw Plugin
 
+下面第一条命令只是可选的只读 marketplace 预览，不会注册持久 marketplace；真正安装时，第二条命令通过 `--marketplace` 直接读取这个仓库。
+
 ```bash
 openclaw plugins marketplace list chenyunguiMilook/vectorshop-cli
 openclaw plugins install vectorshop-design --marketplace chenyunguiMilook/vectorshop-cli
