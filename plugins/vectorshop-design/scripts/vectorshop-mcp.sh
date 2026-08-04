@@ -3,8 +3,8 @@
 # 约定:exec 前 stdout 零输出——stdout 是 MCP 协议通道;一切诊断走 stderr。
 # 就绪判定刻意只看「二进制可执行」:版本对齐默认归 SessionStart hook 管(升级会话
 # 先跑旧二进制、下一会话生效),避免把 30s MCP_TIMEOUT 窗口押在 34MB 下载上(设计
-# §②)。Codex 没有 hook,version_aligned() 分支替它在后台补这一课,同样不阻塞本次
-# 握手。
+# §②)。Codex/OpenClaw 没有 Claude SessionStart 预热,version_aligned() 分支替它们
+# 在后台补这一课,同样不阻塞本次握手。
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_ROOT="${INSTALL_ROOT:-$HOME/.vectorshop}"
@@ -23,25 +23,27 @@ version_aligned() {
   [[ "$have" == "$want" ]]
 }
 
-# 宿主标记:Codex 的 .mcp.codex.json 传 --host-codex。未知参数一律静默忽略——
-# 将来任一宿主加新开关时,旧脚本不会因此启动失败。
+# 宿主标记:各自清单通过 argv 标记宿主。未知参数一律静默忽略——将来任一宿主
+# 加新开关时,旧脚本不会因此启动失败。
 for arg in "$@"; do
   case "$arg" in
     --host-codex) export VECTORSHOP_HOST=codex ;;
+    --host-openclaw) export VECTORSHOP_HOST=openclaw ;;
+    --host-agent) export VECTORSHOP_HOST=agent ;;
     *) ;;
   esac
 done
 
 if [[ ! -x "$BIN" ]]; then
   # 兜底/正路:Claude 侧有 SessionStart hook 预热,这里是 hook 没跑完/失败/被 kill 的
-  # 兜底;Codex 侧没有 hook,这就是首跑正路——.mcp.codex.json 的
-  # startup_timeout_sec=300 覆盖 34MB 同步下载。ensure 内部有锁,与 hook 并发安全。
+  # 兜底;Codex/OpenClaw 没有 Claude hook,这就是首跑正路——宿主清单里的 300s
+  # 连接窗口覆盖 34MB 同步下载。ensure 内部有锁,与 hook 并发安全。
   "$SCRIPT_DIR/ensure-vectorshop.sh" || {
     printf 'vectorshop: 二进制安装失败(多为网络问题)。请检查网络后重开会话,或在 /mcp 面板对 vectorshop 执行 retry。\n' >&2
     exit 1
   }
-elif [[ "${VECTORSHOP_HOST:-}" == "codex" ]] && ! version_aligned; then
-  # Codex 没有 hook 替我们升级,bootstrap 自己扛;但绝不同步等——本次会话跑旧二进制,
+elif [[ "${VECTORSHOP_HOST:-}" == "codex" || "${VECTORSHOP_HOST:-}" == "openclaw" || "${VECTORSHOP_HOST:-}" == "agent" ]] && ! version_aligned; then
+  # Codex/OpenClaw 没有 Claude hook 替我们升级,bootstrap 自己扛;但绝不同步等——本次会话跑旧二进制,
   # 下一会话 fast path 命中新版,与 Claude 侧「升级会话跑旧二进制」的行为一致。
   # current 是原子 mv 替换,已 exec 的进程持有旧二进制文件本身的 inode,不受替换影响。
   # 但这只保证「可执行文件」这一件事:vectorshop 以目录包发布,同目录还有一组
@@ -59,14 +61,13 @@ elif [[ "${VECTORSHOP_HOST:-}" == "codex" ]] && ! version_aligned; then
   # 这个文件里是一贯的。
   nohup "$SCRIPT_DIR/ensure-vectorshop.sh" </dev/null >/dev/null 2>&1 &
 fi
-# Codex 用 .mcp.codex.json 里的 cwd:"." 把我们钉在 plugin 安装目录——那是唯一能让
-# 相对 command 解析成立的写法。但 cwd 同时是工具里相对路径的解析基准:export 的
-# outPath 走 URL(fileURLWithPath:),相对路径会写进 ~/.codex/plugins/cache/…,
-# 下次 plugin 更新连同缓存一起被擦掉,且无声无息。挪到 $HOME:仍与 Claude 侧
+# Codex/OpenClaw 都从 plugin 根解析相对 command/cwd,启动时会把我们钉在安装目录。
+# 但 cwd 同时是工具里相对路径的解析基准:export 的 outPath 若是相对路径,会写进
+# 宿主 plugin 缓存,下次更新可能被擦掉。挪到 $HOME:仍与 Claude 侧
 # (cwd=项目目录)不同,但失败面从「消失在缓存里」降级为「落在家目录」。
 # 拿不到用户项目目录是硬约束:PWD 被 bash 启动时改写,Codex 也没给 MCP server
 # 注入工作目录相关的环境变量。
-if [[ "${VECTORSHOP_HOST:-}" == "codex" ]]; then
+if [[ "${VECTORSHOP_HOST:-}" == "codex" || "${VECTORSHOP_HOST:-}" == "openclaw" || "${VECTORSHOP_HOST:-}" == "agent" ]]; then
   cd "$HOME" || true  # || true:$HOME 万一不存在(裸容器/异常账户)时不让 set -e 在
                        # 这里直接炸掉整个 bootstrap——宁可留在原 cwd 往下走 exec。
 fi

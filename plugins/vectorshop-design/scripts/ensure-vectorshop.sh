@@ -125,15 +125,14 @@ legacy_registration_hinted() {
 }
 
 migrate_legacy() {
-  # Codex 宿主:整段跳过。从 Codex 会话去动 Claude 的 user-scope 注册与 skill 残留
+  # 非 Claude 宿主:整段跳过。从 Codex/OpenClaw 会话去动 Claude 的 user-scope 注册与 skill 残留
   # 属跨生态越权,即便清掉的确实是废注册——那由 Claude 自己的会话去清。
   # 用显式 if 而不是 `[[ … ]] && return 0`:后者在 set -e 下是经典踩坑写法。
   #
-  # 第二个判据 VECTORSHOP_CALLER_PLUGIN_ROOT 是防 (a) 失守的补丁:即便
-  # .codex-plugin/plugin.json 的 "hooks": {} 因某种原因没能拦住,Codex 仍会把这段
-  # 脚本当 SessionStart hook(经由 hooks/hooks.json 的默认路径回退)跑起来——那次
-  # 调用不带 --host-codex(它是 hook 命令,不是我们 .mcp.codex.json 里的 MCP server
-  # 命令),VECTORSHOP_HOST 判据单独测不出来。但 Codex 的 hooks 引擎
+  # 第二个判据 VECTORSHOP_CALLER_PLUGIN_ROOT 是旧版兼容防线:v1.3 及更早的 Codex
+  # plugin cache 里曾有 Claude 的默认 hooks/hooks.json;若宿主回退加载并执行这段脚本,
+  # 那次调用不带 --host-codex(它是 hook 命令,不是 MCP server 命令),
+  # VECTORSHOP_HOST 判据单独测不出来。但 Codex 的 hooks 引擎
   # (codex-rs/hooks/src/engine/discovery.rs)给 hook 命令环境同时塞 PLUGIN_ROOT 与
   # 「兼容用」的 CLAUDE_PLUGIN_ROOT;Claude 的 hook 环境只给 CLAUDE_PLUGIN_ROOT,从不
   # 设裸 PLUGIN_ROOT——这个不对称就是判据来源(已对照 codex 源码核实,非猜测)。
@@ -141,7 +140,7 @@ migrate_legacy() {
   # 文件自己也用 PLUGIN_ROOT 表达「脚本所在目录」,那个值恒非空,直接判它会把 Claude
   # 路径也一起短路掉。Claude 路径必须不受影响:VECTORSHOP_CALLER_PLUGIN_ROOT 在那里
   # 恒为空。
-  if [[ "${VECTORSHOP_HOST:-}" == "codex" || -n "${VECTORSHOP_CALLER_PLUGIN_ROOT:-}" ]]; then
+  if [[ "${VECTORSHOP_HOST:-}" == "codex" || "${VECTORSHOP_HOST:-}" == "openclaw" || "${VECTORSHOP_HOST:-}" == "agent" || -n "${VECTORSHOP_CALLER_PLUGIN_ROOT:-}" ]]; then
     return 0
   fi
   # v0.1 skill:触发词会盖过 MCP 工具,把 Claude 引回 shell+写文件老流程 → 弹窗回归。
