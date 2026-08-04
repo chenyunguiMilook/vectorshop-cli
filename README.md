@@ -1,20 +1,14 @@
-<!--
-  This README ships by copy: the VectorShop repo holds the source, the public
-  vectorshop-cli repo holds the published copy. Edit the source — the next release
-  overwrites the copy. Chinese twin: README.zh-CN.md; keep both in sync.
--->
-
 # vectorshop CLI
 
 **English** · [中文](README.zh-CN.md)
 
-Let **Claude Code** or **Codex** do vector design for you — posters, menus, business cards, banners. Install once, then just say "make me a poster for a coffee shop". The agent calls this tool to write DSL, render it, **look at the rendered image**, and iterate until it's right, producing a `.vsp` you can drag into [VectorShop](https://vectorshop.app/) for further work.
+Let **Claude Code**, **Codex**, or **OpenClaw** do vector design for you — posters, menus, business cards, banners. Install once, then just say "make me a poster for a coffee shop". The agent calls this tool to write DSL, render it, **look at the rendered image**, and iterate until it's right, producing a `.vsp` you can drag into [VectorShop](https://vectorshop.app/) for further work.
 
 ### Get VectorShop
 
 **[vectorshop.app](https://vectorshop.app/)** — the macOS app the `.vsp` files open in. This CLI is free and gives you a finished 1x PNG plus the editable `.vsp` source; refining that design by hand and exporting at 2x/3x happens in the app.
 
-> For people who already have [Claude Code](https://claude.com/claude-code) or [Codex](https://developers.openai.com/codex) installed and signed in. If you don't write code at all, skip this repo entirely and use the AI chat built into [the VectorShop app](https://vectorshop.app/).
+> For people who already have [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex), or [OpenClaw](https://openclaw.ai/) installed and configured. If you don't write code at all, skip this repo entirely and use the AI chat built into [the VectorShop app](https://vectorshop.app/).
 
 ## Install for Claude Code (plugin, recommended)
 
@@ -48,9 +42,26 @@ Same first-run download (~34 MB to `~/.vectorshop/current`), and the same design
 - **Upgrade**: `codex plugin marketplace upgrade vectorshop-cli`. If `codex plugin list` still shows the old version afterwards, run `codex plugin add vectorshop-design@vectorshop-cli` again to pick up the refreshed marketplace snapshot. Either way the pinned binary aligns on your next session — the session you're in keeps running the version it started with, so an upgrade never interrupts you.
 - **Uninstall**: `codex plugin remove vectorshop-design`, then `codex plugin marketplace remove vectorshop-cli`.
 
-> **The Claude Code plugin and the Codex plugin can live on the same machine.** They share one binary under `~/.vectorshop/`, so there is no reason to pick one. (This is a different question from the script-vs-plugin choice below, which really is either/or.)
+## Install for OpenClaw (plugin)
+
+```bash
+openclaw plugins marketplace list chenyunguiMilook/vectorshop-cli
+openclaw plugins install vectorshop-design --marketplace chenyunguiMilook/vectorshop-cli
+openclaw plugins enable vectorshop-design
+openclaw gateway restart
+```
+
+VectorShop is installed as an OpenClaw-compatible plugin bundle with a stdio MCP server and a shared design skill. The first design request downloads the same signed binary to `~/.vectorshop/current`. If a slow connection exceeds OpenClaw's first connection window, restart the Gateway once after the download finishes; subsequent starts are immediate.
+
+Verify the install with `openclaw plugins inspect vectorshop-design`. In a coding or messaging agent, ask for a poster and OpenClaw will use the `vectorshop__*` MCP tools, inspect the inline render, and deliver the PNG plus `.vsp` source.
+
+- **Upgrade**: `openclaw plugins update vectorshop-design`, then restart the Gateway when prompted.
+- **Uninstall**: `openclaw plugins uninstall vectorshop-design`.
+- **Tools missing in a sandboxed agent?** Allow `bundle-mcp`, `group:plugins`, or `vectorshop__*` in that agent's sandbox tool policy, then restart the Gateway.
+
+> **The Claude Code, Codex, and OpenClaw plugins can live on the same machine.** They share one binary under `~/.vectorshop/`, so there is no reason to pick one. (This is a different question from the script-vs-plugin choice below, which really is either/or.)
 >
-> That sharing has one consequence worth knowing: `rm -rf ~/.vectorshop` during uninstall removes the binary **both** plugins use. Whichever one you kept will simply re-download it (~34 MB) on its next run.
+> That sharing has one consequence worth knowing: `rm -rf ~/.vectorshop` during uninstall removes the binary **all three** plugins use. Any plugin you kept will simply re-download it (~34 MB) on its next run.
 
 ## Install via script (fallback, Claude Code only)
 
@@ -70,7 +81,7 @@ The script is self-contained and auditable — reading it after `curl` before ru
 ## Requirements
 
 - macOS (Apple Silicon). The binary is signed with an Apple Developer ID and notarized, so it runs straight after download.
-- The `claude` CLI (Claude Code) and/or the `codex` CLI, depending on which you install for.
+- Claude Code, Codex, and/or OpenClaw, depending on which plugin you install.
 
 ## Manual install
 
@@ -78,4 +89,15 @@ Grab `vectorshop-cli-macos-arm64.tar.gz` from [Releases](https://github.com/chen
 
 ```bash
 claude mcp add -s user vectorshop -- "$PWD/vectorshop" --mcp
+```
+
+## Repository boundary
+
+This repository is the source of truth for the public VectorShop agent-plugin delivery layer: all compatible host manifests, the shared design skill, plugin bootstrap/install scripts, plugin tests, documentation, and pinned release hashes live here. The private VectorShop monorepo owns the Swift renderer and produces signed, notarized release archives; binaries are published through this repository's GitHub Releases rather than committed to Git history.
+
+Run the delivery checks locally with:
+
+```bash
+python3 tests/check_manifests.py
+bash tests/test_plugin.sh
 ```

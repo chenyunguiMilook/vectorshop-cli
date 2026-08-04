@@ -1,0 +1,21 @@
+name: Validate plugin delivery
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check JSON and cross-host contracts
+        run: python3 tests/check_manifests.py
+      - name: Check shell syntax
+        run: |
+          bash -n plugins/vectorshop-design/scripts/ensure-vectorshop.sh
+          bash -n plugins/vectorshop-design/scripts/vectorshop-mcp.sh
+          bash -n tests/test_plugin.sh
+      - name: Run isolated installer and bootstrap smoke tests
+        run: bash tests/test_plugin.sh

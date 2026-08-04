@@ -2,7 +2,7 @@
   "mcpServers": {
     "vectorshop": {
       "command": "./scripts/vectorshop-mcp.sh",
-      "args": ["--host-codex"],
+      "args": ["--host-agent"],
       "cwd": ".",
       "startup_timeout_sec": 300,
       "default_tools_approval_mode": "auto"

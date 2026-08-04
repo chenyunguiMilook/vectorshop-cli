@@ -1,14 +1,8 @@
-<!--
-  This README ships by copy: the VectorShop repo holds the source, the public
-  vectorshop-cli repo holds the published copy. Edit the source — the next release
-  overwrites the copy. English twin (default entry point): README.md; keep both in sync.
--->
-
 # vectorshop CLI
 
 [English](README.md) · **中文**
 
-让 **Claude Code** 或 **Codex** 帮你做矢量设计（海报 / 菜单 / 名片 / banner …）：装一次，之后
+让 **Claude Code**、**Codex** 或 **OpenClaw** 帮你做矢量设计（海报 / 菜单 / 名片 / banner …）：装一次，之后
 直接说「帮我做一张咖啡店海报」，它会自己调用本工具写 DSL、渲染、**看渲染图**、改到满意，
 产出可拖进 [VectorShop](https://vectorshop.app/) 继续精修的 `.vsp`。
 
@@ -17,8 +11,8 @@
 **[vectorshop.app](https://vectorshop.app/)** —— `.vsp` 文件用它打开的 macOS app。本 CLI 免费，
 出成品 1x PNG 和可编辑的 `.vsp` 源文件；把设计接手过来手工精修、导出 2x/3x 高清，在 app 里做。
 
-> 面向已安装并登录 [Claude Code](https://claude.com/claude-code) 或
-> [Codex](https://developers.openai.com/codex) 的用户。纯非技术用户不必看这个仓库，
+> 面向已安装并配置好 [Claude Code](https://claude.com/claude-code)、
+> [Codex](https://developers.openai.com/codex) 或 [OpenClaw](https://openclaw.ai/) 的用户。纯非技术用户不必看这个仓库，
 > 直接用 [VectorShop app](https://vectorshop.app/) 本体的 AI 聊天即可。
 
 ## 安装方式一：Claude Code Plugin（推荐）
@@ -67,13 +61,30 @@ MCP 工具调用免审批，所以这一侧**一个 hook 都不带**——没有
 - **卸载**：`codex plugin remove vectorshop-design`，然后
   `codex plugin marketplace remove vectorshop-cli`。
 
-> **Claude Code plugin 与 Codex plugin 可以同机共存**：两者共用 `~/.vectorshop/` 下的
+## 安装方式三：OpenClaw Plugin
+
+```bash
+openclaw plugins marketplace list chenyunguiMilook/vectorshop-cli
+openclaw plugins install vectorshop-design --marketplace chenyunguiMilook/vectorshop-cli
+openclaw plugins enable vectorshop-design
+openclaw gateway restart
+```
+
+VectorShop 会作为 OpenClaw 兼容 Plugin Bundle 安装，同时提供 stdio MCP server 和共享设计 Skill。第一次设计请求会把同一份签名公证二进制下载到 `~/.vectorshop/current`。如果网络较慢、超过 OpenClaw 的首次连接窗口，等下载完成后重启一次 Gateway 即可；后续启动会立即完成。
+
+用 `openclaw plugins inspect vectorshop-design` 检查安装状态。在 coding 或 messaging agent 里直接说“做一张海报”，OpenClaw 会调用 `vectorshop__*` MCP 工具、查看内联渲染图，并交付 PNG 与 `.vsp` 源文件。
+
+- **升级**：`openclaw plugins update vectorshop-design`，按提示重启 Gateway。
+- **卸载**：`openclaw plugins uninstall vectorshop-design`。
+- **沙箱 agent 看不到工具？** 在该 agent 的 sandbox tool policy 里允许 `bundle-mcp`、`group:plugins` 或 `vectorshop__*`，再重启 Gateway。
+
+> **Claude Code、Codex 与 OpenClaw plugin 可以同机共存**：三者共用 `~/.vectorshop/` 下的
 > 同一份二进制，不必二选一。（这与下面「脚本 vs plugin」那个真正二选一的选择是两回事。）
 >
-> 共用带来一个值得知道的后果：卸载时执行 `rm -rf ~/.vectorshop` 会把**两边共用**的二进制
-> 一起删掉。留下的那一边下次运行时会自己重新下载（约 34MB）。
+> 共用带来一个值得知道的后果：卸载时执行 `rm -rf ~/.vectorshop` 会把**三边共用**的二进制
+> 一起删掉。仍保留的任一插件下次运行时会自己重新下载（约 34MB）。
 
-## 安装方式三：一行脚本（备选，仅支持 Claude Code）
+## 安装方式四：一行脚本（备选，仅支持 Claude Code）
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/chenyunguiMilook/vectorshop-cli/main/install.sh | bash
@@ -94,7 +105,7 @@ curl -fsSL https://raw.githubusercontent.com/chenyunguiMilook/vectorshop-cli/mai
 ## 前提
 
 - macOS（Apple Silicon）。二进制经 Apple Developer ID 签名并公证，下载即可运行。
-- 已安装 `claude` CLI（Claude Code）和/或 `codex` CLI，取决于你要装哪一侧。
+- 已安装 Claude Code、Codex 和/或 OpenClaw，取决于你要安装哪一侧。
 
 ## 手动安装
 
@@ -104,4 +115,15 @@ curl -fsSL https://raw.githubusercontent.com/chenyunguiMilook/vectorshop-cli/mai
 
 ```bash
 claude mcp add -s user vectorshop -- "$PWD/vectorshop" --mcp
+```
+
+## 仓库边界
+
+本仓库是 VectorShop agent plugin 公开发行层的唯一源：所有宿主清单、共享设计 Skill、plugin bootstrap/安装脚本、plugin 测试、文档和 Release SHA 都在这里维护。私有 VectorShop monorepo 负责 Swift 渲染引擎，以及签名、公证后的发行包构建；二进制发布到本仓库的 GitHub Releases，不提交进 Git 历史。
+
+本地验证：
+
+```bash
+python3 tests/check_manifests.py
+bash tests/test_plugin.sh
 ```

@@ -1,0 +1,9 @@
+interface:
+  display_name: "VectorShop Design"
+  short_description: "Create and refine editable vector designs"
+  default_prompt: "Use $vectorshop-design to create a polished coffee shop poster and deliver the PNG and editable .vsp source."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "vectorshop"
+      description: "VectorShop tools for design guidance, rendering, inspection, and export"
