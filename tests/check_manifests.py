@@ -89,6 +89,11 @@ def main() -> None:
     require(codex_server["args"][0] == "-c", "shared MCP launcher must use sh -c")
     launcher = codex_server["args"][1]
     require("CLAUDE_PLUGIN_ROOT" in launcher, "launcher omits the Claude plugin root")
+    # Claude Code substitutes ${VAR} / ${VAR:-default} in plugin MCP configs when it loads them, before
+    # the shell ever runs: "${CLAUDE_PLUGIN_ROOT:-}" became "" and the launcher fell through to the
+    # agent branch, so the server never started under Claude (1.4.0). Plain $VAR is left to the shell,
+    # which sees CLAUDE_PLUGIN_ROOT in the server environment under Claude and nothing elsewhere.
+    require("${" not in launcher, "launcher must not use ${...}: Claude Code expands it at config load")
     require("--host-agent" in launcher, "launcher omits the production agent flag")
     require(codex_server["startup_timeout_sec"] >= 300, "startup timeout is too short")
     require(
