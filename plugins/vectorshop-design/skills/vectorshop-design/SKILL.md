@@ -14,8 +14,8 @@ Use the VectorShop MCP tools for the complete design loop. Do not replace them w
 3. Use `get_skill` and `get_example` only when the emitted guidance points to a relevant foundation, category, or example. Do not load unrelated material.
 4. Build one coherent component-DSL document from the returned guidance. Use user-supplied assets through the tools' `assets` argument; do not invent local paths.
 5. Call `render`. Inspect the returned image itself, not only the DSL or validation text. Check hierarchy, spacing, alignment, contrast, cropping, legibility, and visual balance.
-6. Fix every reported red line and any visible design defect, then render again. Continue until the image is polished and `redLineCount` is zero.
-7. Call `export` only after the final render is satisfactory. Pass the same DSL used for that render and an absolute `.vsp` output path. Do not set `replace:true` unless the user explicitly approved overwriting existing output.
+6. Fix every reported red line and any visible design defect, then render again. The first `render` returns a `designId`: for every later round call `render` with that `designId` and a `patch` (`set` / `replace` / `remove` / `insert` / `move`, located by element `id`) instead of resending the whole DSL. Call `get_design` if you need to see the current DSL. Continue until the image is polished and `redLineCount` is zero.
+7. Call `export` only after the final render is satisfactory. Pass the `designId` of that final render (not the DSL) and an absolute `.vsp` output path. Do not set `replace:true` unless the user explicitly approved overwriting existing output.
 8. Deliver both the PNG and `.vsp`. In a messaging channel, attach the generated files when the host provides a file-send tool; otherwise report their absolute paths clearly.
 
 ## Quality and delivery rules
