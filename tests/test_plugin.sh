@@ -91,6 +91,33 @@ check '[[ -x "$BIN" ]]' "pinned binary installed"
 check '[[ "$(cat "$VERSION_FILE")" == "9.9.9" ]]' "VERSION recorded"
 check '"$BIN" --help >/dev/null' "installed binary starts"
 
+echo "== version ordering (current is shared across hosts: upgrade only)"
+# 每个用例:已装 VERSION=$1,manifest 钉 $2。current 里放一个标记文件——重装会整目录
+# 替换掉它,标记还在就说明没重新安装。保留路径用不可达的下载地址:真去下载会直接失败。
+ORDER_MANIFEST="$WORK/order-manifest.env"
+ORDER_LOG="$WORK/order.log"
+run_ordered() {
+  printf '%s' "$1" > "$VERSION_FILE"
+  : > "$INSTALL_ROOT/current/.marker"
+  sed "s/^VSMANIFEST_VERSION=.*/VSMANIFEST_VERSION=\"$2\"/" "$VECTORSHOP_MANIFEST_FILE" > "$ORDER_MANIFEST"
+  VECTORSHOP_MANIFEST_FILE="$ORDER_MANIFEST" VECTORSHOP_BASE_URL="${3:-$VECTORSHOP_BASE_URL}" \
+    bash "$ENSURE" 2>"$ORDER_LOG"
+}
+UNREACHABLE="file://$WORK/no-such-release"
+
+check 'run_ordered 0.5.1 0.5.0 "$UNREACHABLE"' "older manifest (0.5.0 vs installed 0.5.1) does not download"
+check '[[ "$(cat "$VERSION_FILE")" == "0.5.1" && -f "$INSTALL_ROOT/current/.marker" ]]' "newer installed binary is kept"
+check 'grep -Fq "v0.5.1" "$ORDER_LOG" && grep -Fq "v0.5.0" "$ORDER_LOG"' "keeping a newer binary is logged to stderr"
+
+check 'run_ordered 0.10.0 0.9.0 "$UNREACHABLE"' "versions compare numerically, not as strings (0.10.0 > 0.9.0)"
+check 'run_ordered 1.5.0 1.5.0-rc1 "$UNREACHABLE"' "release outranks its own pre-release"
+
+check 'run_ordered 0.5.0 0.5.1' "newer manifest (0.5.1 vs installed 0.5.0) installs"
+check '[[ "$(cat "$VERSION_FILE")" == "0.5.1" && ! -f "$INSTALL_ROOT/current/.marker" ]]' "older installed binary is upgraded"
+
+check 'run_ordered garbage 0.5.1' "unreadable installed VERSION falls back to reinstall"
+check '[[ "$(cat "$VERSION_FILE")" == "0.5.1" && ! -f "$INSTALL_ROOT/current/.marker" ]]' "reinstall replaced the unreadable version"
+
 echo "== shared agent bootstrap"
 INIT='{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18"}}'
 rm -rf "$INSTALL_ROOT/current"

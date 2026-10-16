@@ -52,7 +52,40 @@ trap cleanup EXIT
 
 installed_version() { if [[ -f "$VERSION_FILE" ]]; then cat "$VERSION_FILE"; fi; }
 
-up_to_date() { [[ -x "$BIN" && "$(installed_version)" == "$VSMANIFEST_VERSION" ]]; }
+# 语义版本比较:stdout 打 -1/0/1(a 比 b 旧/相同/新);任一边不是 X.Y.Z 时返回 1、不打印。
+# 预发布后缀(-rc1)只看「有没有」:同核心时正式版比预发布新,两个预发布视为相同;
+# 构建元数据(+xxx)忽略。纯 bash,macOS 自带 bash 3.2 能跑;10# 防止 08 被当八进制。
+semver_cmp() {
+  local re='^v?([0-9]+)\.([0-9]+)\.([0-9]+)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$'
+  local a b ap bp i
+  [[ "$1" =~ $re ]] || return 1
+  a=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"); ap="${BASH_REMATCH[4]}"
+  [[ "$2" =~ $re ]] || return 1
+  b=("${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}" "${BASH_REMATCH[3]}"); bp="${BASH_REMATCH[4]}"
+  for i in 0 1 2; do
+    if (( 10#${a[i]} > 10#${b[i]} )); then echo 1; return 0; fi
+    if (( 10#${a[i]} < 10#${b[i]} )); then echo -1; return 0; fi
+  done
+  if [[ -z "$ap" && -n "$bp" ]]; then echo 1
+  elif [[ -n "$ap" && -z "$bp" ]]; then echo -1
+  else echo 0
+  fi
+}
+
+# 「已装的不比 manifest 旧」就算就绪——只升不降。~/.vectorshop/current 是同机所有宿主
+# (Claude Code / Codex / OpenClaw,各装各的插件版本)共用的一份;按「不相等就重装」的
+# 旧规矩,装着旧插件的宿主会在每次启动时把别的宿主刚装的新二进制降回去,几个宿主轮流
+# 互相覆盖(2026-10-16 实测:0.5.1 → 0.4.0 → 0.5.0)。保留新版是安全的:CLI 只做增量
+# 演进,新二进制读得了旧版写的 .vsp,也认旧插件 SKILL 用到的工具与参数。
+# 版本号认不出(VERSION 损坏、manifest 写了非 X.Y.Z)时退回旧规矩:不相等就重装。
+up_to_date() {
+  [[ -x "$BIN" ]] || return 1
+  local have cmp; have="$(installed_version)"
+  [[ "$have" == "$VSMANIFEST_VERSION" ]] && return 0
+  cmp="$(semver_cmp "$have" "$VSMANIFEST_VERSION")" || return 1
+  [[ "$cmp" == "1" ]] || return 1
+  log "已装 v$have 比本插件钉的 v$VSMANIFEST_VERSION 新,保留不降级。"
+}
 
 # v0.2 / install.sh 装的既有二进制没有 VERSION 文件:裸二进制 sha 与 manifest 匹配则
 # 原地认领(补写 VERSION),免重下 34MB。认领也算「安装事件」→ 迁移步无条件走 CLI 确认。
