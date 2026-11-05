@@ -15,6 +15,20 @@
 > [Codex](https://developers.openai.com/codex) 或 [OpenClaw](https://openclaw.ai/) 的用户。纯非技术用户不必看这个仓库，
 > 直接用 [VectorShop app](https://vectorshop.app/) 本体的 AI 聊天即可。
 
+## 原生图标 / Native icons (.vsm)
+
+图标能力使用与安装二进制匹配的 `symbol_emit` → `symbol_render` → `symbol_export` 流程，
+`symbol_get_design` 可读取已有 .vsm。AI 会检查三种字重与16/24/32px预览，交付可在
+Symbol Editor 继续编辑的 .vsm 和透明 PNG；可按需导出普通 SVG 或 SF Symbols 模板。
+同一份 Skill 会把图标与海报设计路由到各自工具。
+
+新增源码需要包含 `symbol_*` 的 CLI Release；仓库中的旧版 `bin-manifest.env` 不会因此自动
+升级。发布时先上传并验证 CLI，再更新 manifest 的版本与哈希，并同步插件版本。现有 .vsp
+设计和商业规则保持；.vsm 不套用 .vsp 的 Pro 编辑锁文案。
+
+新目录包包含 `vectorshop-symbol`；独立安装器在该文件存在时一并创建 PATH 软链，
+仍兼容只有主二进制的旧目录包。
+
 ## 安装方式一：Claude Code Plugin（推荐）
 
 在 Claude Code 里执行两条命令：

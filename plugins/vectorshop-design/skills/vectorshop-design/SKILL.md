@@ -1,13 +1,28 @@
 ---
 name: vectorshop-design
-description: Create, render, inspect, revise, and export editable vector designs with the VectorShop MCP tools. Use for posters, menus, flyers, banners, social graphics, business cards, signs, invitations, covers, and other requests that should deliver a polished PNG plus an editable .vsp source file.
+description: Create, render, inspect, revise, and export editable vector designs with the VectorShop MCP tools. Use for posters, menus, flyers, banners, social graphics, business cards, signs, invitations, covers, editable monochrome icons, SF Symbols, and other requests that should deliver a PNG plus an editable .vsp or .vsm source file.
 ---
 
 # VectorShop Design
 
 Use the VectorShop MCP tools for the complete design loop. Do not replace them with shell commands or hand-written `.vsp` files.
 
-## Workflow
+## Choose the document type
+
+For monochrome icons, SF Symbols, or `.vsm` requests, use the symbol workflow below. For posters and other composed designs, use the `.vsp` workflow. `.vsm` icons use native shapes, boolean operations and three weight masters; they are separate from `.vsp` reusable component instances.
+
+## Symbol workflow
+
+1. Call `symbol_emit` with the brief before writing a symbol spec. It returns the current schema, coordinate/boolean-order rules and runnable examples.
+2. Create a spec with stable page/shape IDs. Use a consistent viewBox and stroke/corner style across an icon family. For existing `.vsm` work, call `symbol_get_design(file)` to retain native geometry, reference assets and page metadata.
+3. Call `symbol_render` and inspect the actual UltraLight/Regular/Black and 16/24/32px previews. Check recognition, optical centering, margins, endpoints and negative space. Fix every geometry error and visible defect.
+4. Iterate with `symbol_render(designId, revision, patch)`. Use `symbol_get_design(designId)` when the current spec is unclear. Render every page at the current revision before export.
+5. Deliver with `symbol_export(designId, revision, outPath)` using an absolute `.vsm` path. This writes the editable native document and transparent PNGs. Request `svg:"plain"` for an ordinary SVG, or `svg:"sf-symbol"` for an SF Symbols template when requested; report template export separately from system/runtime compatibility validation.
+6. Deliver the PNG and `.vsm`; include any requested SVG. `.vsm` editing currently has no `.vsp` Pro lock. Do not reuse `.vsp` Pro messages for icons.
+
+If the connected server lacks `symbol_*`, explain that its CLI binary needs the release containing symbol authoring. Do not fabricate unavailable tools or hand-write package internals.
+
+## .vsp workflow
 
 1. Read the user's brief, target dimensions, copy, assets, language, and delivery location. Make conservative assumptions when details are missing.
 2. Call `list_categories` when the category is unclear. Call `emit` with the brief and selected category before writing DSL.
@@ -23,6 +38,6 @@ Use the VectorShop MCP tools for the complete design loop. Do not replace them w
 - Preserve the user's exact factual copy unless they ask for rewriting. Flag missing facts instead of fabricating prices, dates, addresses, claims, or contact details.
 - Prefer a small number of strong visual ideas over crowded decoration.
 - Keep text inside safe margins and make the main message readable at thumbnail size.
-- Treat `render` as read-only iteration and `export` as the only file-writing design tool.
-- Default to free 1x output. Request 2x or 3x only when the user asks for it; if Pro entitlement is unavailable, deliver 1x and explain the limitation.
+- Use `render` / `symbol_render` for in-memory iteration and `export` / `symbol_export` for writing deliverables.
+- For `.vsp` designs, default to free 1x output. Request 2x or 3x only when the user asks for it; if Pro entitlement is unavailable, deliver 1x and explain the limitation.
 - Never claim completion before inspecting the final rendered image.

@@ -1,7 +1,7 @@
 {
   "name": "vectorshop-design",
   "version": "1.5.2",
-  "description": "VectorShop 设计 MCP server:免费出 1x 成品图与 .vsp 源文件;App 内精修与 2x/3x 高清需 App Pro",
+  "description": "VectorShop 设计与图标 MCP：生成 PNG 和可编辑 .vsp/.vsm；.vsp 精修与高清输出遵循现有 App Pro 规则",
   "author": {
     "name": "chenyunguiMilook"
   },

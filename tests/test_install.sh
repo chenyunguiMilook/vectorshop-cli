@@ -42,6 +42,7 @@ STAGE="$STAGE_PARENT/vectorshop-cli-test"
 mkdir -p "$STAGE"
 cp tests/fixtures/fake-vectorshop.sh "$STAGE/vectorshop"
 chmod +x "$STAGE/vectorshop"
+cp "$STAGE/vectorshop" "$STAGE/vectorshop-symbol"
 
 TARBALL="vectorshop-cli-macos-${ARCH}.tar.gz"
 tar -czf "$SERVER/$TARBALL" -C "$STAGE_PARENT" "$(basename "$STAGE")"
@@ -72,6 +73,7 @@ echo "== standalone installer"
 bash "$INSTALL_SCRIPT" --yes >/dev/null
 check '[[ -x "$BIN_PATH" ]]' "binary is installed"
 check '[[ -L "$BIN_LINK_DIR/vectorshop" ]]' "binary symlink is created"
+check '[[ -x "$BIN_LINK_DIR/vectorshop-symbol" ]]' "symbol binary is installed and linked"
 check '[[ "$(wc -l < "$CLAUDE_SHIM_LOG")" -eq 2 ]]' "Claude receives remove and add calls"
 check 'grep -Fxq "mcp remove -s user vectorshop" "$CLAUDE_SHIM_LOG"' "old MCP registration is removed"
 check 'grep -Fxq "mcp add -s user vectorshop -- $BIN_PATH --mcp" "$CLAUDE_SHIM_LOG"' "new MCP registration uses the installed binary"
@@ -102,6 +104,14 @@ else
 fi
 check 'grep -Fq "未找到 claude 命令" <<<"$OUT"' "missing Claude is explained"
 check 'grep -Fq "claude mcp add -s user vectorshop" <<<"$OUT"' "manual registration command is shown"
+
+echo "== standalone installer accepts older archives"
+rm "$STAGE/vectorshop-symbol"
+tar -czf "$SERVER/$TARBALL" -C "$STAGE_PARENT" "$(basename "$STAGE")"
+(cd "$SERVER" && shasum -a 256 "$TARBALL" > "$TARBALL.sha256")
+bash "$INSTALL_SCRIPT" --yes >/dev/null 2>&1
+check '[[ -x "$BIN_PATH" ]]' "older archive still installs its primary binary"
+check '[[ ! -L "$BIN_LINK_DIR/vectorshop-symbol" ]]' "downgrade removes its owned dangling symbol link"
 
 echo "== standalone installer checksum"
 printf 'tampered\n' >> "$SERVER/$TARBALL"
