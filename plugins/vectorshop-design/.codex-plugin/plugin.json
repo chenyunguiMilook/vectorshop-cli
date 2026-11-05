@@ -1,7 +1,7 @@
 {
   "name": "vectorshop-design",
   "version": "1.5.2",
-  "description": "VectorShop 设计 MCP server:免费出 1x 成品图与 .vsp 源文件;App 内精修与 2x/3x 高清需 App Pro",
+  "description": "VectorShop 设计与图标 MCP：生成 PNG 和可编辑 .vsp/.vsm；.vsp 精修与高清输出遵循现有 App Pro 规则",
   "author": {
     "name": "chenyunguiMilook"
   },
@@ -9,8 +9,8 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "VectorShop Design",
-    "shortDescription": "说一句话出矢量设计图",
-    "longDescription": "用 VectorShop MCP 生成、渲染、检查并交付可编辑矢量设计，同时输出 PNG 成品与 .vsp 源文件。",
+    "shortDescription": "生成可编辑矢量设计和图标",
+    "longDescription": "通过 VectorShop MCP 创建、渲染、修改并交付矢量设计与单色图标，输出 PNG 和可编辑 .vsp 或 .vsm。",
     "developerName": "VectorShop",
     "category": "Productivity",
     "capabilities": [
@@ -18,7 +18,8 @@
       "Write"
     ],
     "defaultPrompt": [
-      "帮我做一张咖啡店海报，并交付 PNG 和可编辑的 .vsp 源文件。"
+      "帮我做一张咖啡店海报，并交付 PNG 和可编辑的 .vsp 源文件。",
+      "设计一组风格统一的单色工具图标，并交付 PNG 和可编辑的 .vsm 文件。"
     ],
     "websiteURL": "https://vectorshop.app"
   }

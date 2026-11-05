@@ -10,6 +10,22 @@ Let **Claude Code**, **Codex**, or **OpenClaw** do vector design for you — pos
 
 > For people who already have [Claude Code](https://claude.com/claude-code), [Codex](https://developers.openai.com/codex), or [OpenClaw](https://openclaw.ai/) installed and configured. If you don't write code at all, skip this repo entirely and use the AI chat built into [the VectorShop app](https://vectorshop.app/).
 
+## Native icons (.vsm)
+
+The matching CLI source adds `symbol_emit` → `symbol_render` → `symbol_export` for
+editable monochrome icons, with `symbol_get_design` to resume existing `.vsm` files.
+The agent inspects three weights and actual 16/24/32px previews, then delivers native
+`.vsm` plus transparent PNGs and optional ordinary SVG or SF Symbols templates.
+The shared skill routes icon and poster requests to their respective tools.
+
+These tools require a CLI release containing symbol authoring. Source changes do not
+upgrade the pinned `bin-manifest.env`: publish and verify the CLI first, then update
+its version/hashes and both host plugin versions. Existing `.vsp` workflows retain
+their commercial rules; `.vsm` does not inherit the `.vsp` Pro editing lock.
+
+New archives also contain `vectorshop-symbol`; the standalone installer links it
+when present while remaining compatible with older, primary-binary-only archives.
+
 ## Install for Claude Code (plugin, recommended)
 
 Run these two commands inside Claude Code:

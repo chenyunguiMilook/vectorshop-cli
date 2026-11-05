@@ -88,6 +88,22 @@ else
   say "（不建也不影响 Claude:MCP 注册用的是绝对路径,软链只服务你手动在终端敲裸 vectorshop。）"
 fi
 
+# New archives also carry the native .vsm CLI. Older pinned releases remain installable.
+SYMBOL_BIN="$INSTALL_ROOT/current/vectorshop-symbol"
+if [[ "$DRY_RUN" -eq 1 ]]; then
+  say "[dry-run] 新目录包含 vectorshop-symbol 时一并加入 PATH"
+elif [[ -x "$SYMBOL_BIN" ]]; then
+  if mkdir -p "$BIN_LINK_DIR" 2>/dev/null && ln -sf "$SYMBOL_BIN" "$BIN_LINK_DIR/vectorshop-symbol" 2>/dev/null; then
+    say "已软链: $BIN_LINK_DIR/vectorshop-symbol"
+  else
+    say "提示: 未能创建 vectorshop-symbol 软链，可直接运行 $SYMBOL_BIN"
+  fi
+elif [[ -L "$BIN_LINK_DIR/vectorshop-symbol" && "$(readlink "$BIN_LINK_DIR/vectorshop-symbol")" == "$SYMBOL_BIN" ]]; then
+  # Downgrading to a pre-symbol archive only removes the link owned by this installer.
+  rm -f "$BIN_LINK_DIR/vectorshop-symbol"
+fi
+
+
 # ---- 5. 注册 Claude Code MCP server(Phase 2:取代 skill + permissions 白名单)----
 # 一次注册,设计全程零权限弹窗;Claude Code 里的工具名 mcp__vectorshop__*。
 # remove 先行保证幂等(add 遇同名报错);remove/add 必须同 scope(-s user:全局可用)。
