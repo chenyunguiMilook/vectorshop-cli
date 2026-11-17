@@ -17,14 +17,13 @@
 
 ## 原生图标 / Native icons (.vsm)
 
-图标能力使用与安装二进制匹配的 `symbol_emit` → `symbol_render` → `symbol_export` 流程，
+CLI 0.6.0 / 插件 1.6.0 提供 `symbol_emit` → `symbol_render` → `symbol_export` 图标流程，
 `symbol_get_design` 可读取已有 .vsm。AI 会检查三种字重与16/24/32px预览，交付可在
 Symbol Editor 继续编辑的 .vsm 和透明 PNG；可按需导出普通 SVG 或 SF Symbols 模板。
 同一份 Skill 会把图标与海报设计路由到各自工具。
 
-新增源码需要包含 `symbol_*` 的 CLI Release；仓库中的旧版 `bin-manifest.env` 不会因此自动
-升级。发布时先上传并验证 CLI，再更新 manifest 的版本与哈希，并同步插件版本。现有 .vsp
-设计和商业规则保持；.vsm 不套用 .vsp 的 Pro 编辑锁文案。
+更新插件后重开会话，即可获取对应二进制。交付的图标可在 VectorShop Mac 2.3 及以上版本
+打开。现有 .vsp 设计和商业规则保持；.vsm 编辑无需 App Pro。
 
 新目录包包含 `vectorshop-symbol`；独立安装器在该文件存在时一并创建 PATH 软链，
 仍兼容只有主二进制的旧目录包。
@@ -41,15 +40,14 @@ Symbol Editor 继续编辑的 .vsm 和透明 PNG；可按需导出普通 SVG 或
 （或在终端非交互执行：
 `claude plugin marketplace add chenyunguiMilook/vectorshop-cli && claude plugin install vectorshop-design@vectorshop-cli`）
 
-装完重开会话：首次会自动下载签名公证的二进制（约 34MB）到 `~/.vectorshop/current`
+装完重开会话：首次会自动下载签名公证的二进制（约 68MB）到 `~/.vectorshop/current`
 （首跑多等十几秒，仅此一次）。之后说一句「帮我做一张海报」即可——Claude 直接调
 MCP 工具写 DSL、**当场看内联渲染图**迭代，满意才落盘交付，设计全程**零权限弹窗**。
 
-> 零弹窗是怎么做到的：本插件自带一个 `PreToolUse` hook，只对自己的 6 个工具
-> （`list_categories`/`emit`/`get_example`/`get_skill`/`render`/`export`）自动放行，
-> 不放宽任何其它权限、也不修改你的 `settings.json`，卸载插件即失效。其中前五个
-> 全内存只读，`export` 会按对话里给出的路径写出 `.vsp`/`.png`/`.json` 三件套
-> （目标已存在时拒绝覆盖）。
+> 零弹窗是怎么做到的：本插件自带一个 `PreToolUse` hook，对自己的设计与 `symbol_*`
+> 工具自动放行，不放宽任何其它权限、也不修改你的 `settings.json`，卸载插件即失效。
+> 渲染阶段按 `designId` 在内存中迭代，后续只传改动；`export` 写出 `.vsp` 和 PNG，
+> `symbol_export` 写出 `.vsm` 和透明 PNG，并可按需附带 SVG。两者默认拒绝覆盖已有文件。
 
 - **升级**：`/plugin update vectorshop-design@vectorshop-cli`（或在 `/plugin` →
   Marketplaces 里为本 marketplace 打开自动更新）；二进制在下一会话自动对齐。
@@ -65,7 +63,7 @@ codex plugin marketplace add chenyunguiMilook/vectorshop-cli
 codex plugin add vectorshop-design@vectorshop-cli
 ```
 
-首跑同样自动下载约 34MB 到 `~/.vectorshop/current`，设计流程完全一致。Codex 默认就对
+首跑同样自动下载约 68MB 到 `~/.vectorshop/current`，设计流程完全一致。Codex 默认就对
 MCP 工具调用免审批，所以这一侧**一个 hook 都不带**——没有要你审阅的东西，也没有弹窗。
 
 - **升级**：`codex plugin marketplace upgrade vectorshop-cli`。如果之后 `codex plugin list`
@@ -98,7 +96,7 @@ VectorShop 会作为 OpenClaw 兼容 Plugin Bundle 安装，同时提供 stdio M
 > 同一份二进制，不必二选一。（这与下面「脚本 vs plugin」那个真正二选一的选择是两回事。）
 >
 > 共用带来一个值得知道的后果：卸载时执行 `rm -rf ~/.vectorshop` 会把**三边共用**的二进制
-> 一起删掉。仍保留的任一插件下次运行时会自己重新下载（约 34MB）。
+> 一起删掉。仍保留的任一插件下次运行时会自己重新下载（约 68MB）。
 
 ## 安装方式四：一行脚本（备选，仅支持 Claude Code）
 

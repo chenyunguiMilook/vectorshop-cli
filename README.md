@@ -12,16 +12,15 @@ Let **Claude Code**, **Codex**, or **OpenClaw** do vector design for you — pos
 
 ## Native icons (.vsm)
 
-The matching CLI source adds `symbol_emit` → `symbol_render` → `symbol_export` for
+CLI 0.6.0 and plugin 1.6.0 add `symbol_emit` → `symbol_render` → `symbol_export` for
 editable monochrome icons, with `symbol_get_design` to resume existing `.vsm` files.
 The agent inspects three weights and actual 16/24/32px previews, then delivers native
 `.vsm` plus transparent PNGs and optional ordinary SVG or SF Symbols templates.
 The shared skill routes icon and poster requests to their respective tools.
 
-These tools require a CLI release containing symbol authoring. Source changes do not
-upgrade the pinned `bin-manifest.env`: publish and verify the CLI first, then update
-its version/hashes and both host plugin versions. Existing `.vsp` workflows retain
-their commercial rules; `.vsm` does not inherit the `.vsp` Pro editing lock.
+Update the plugin and start a new session to get the matching binary. Open the
+delivered icons in VectorShop Mac 2.3 or later. Existing `.vsp` workflows retain
+their commercial rules; `.vsm` editing does not require App Pro.
 
 New archives also contain `vectorshop-symbol`; the standalone installer links it
 when present while remaining compatible with older, primary-binary-only archives.
@@ -38,9 +37,9 @@ Run these two commands inside Claude Code:
 (Or non-interactively from a terminal:
 `claude plugin marketplace add chenyunguiMilook/vectorshop-cli && claude plugin install vectorshop-design@vectorshop-cli`)
 
-Start a new session afterwards. The first run downloads a signed, notarized binary (~34 MB) to `~/.vectorshop/current` — a one-time wait of a few seconds. After that, say "make me a poster" and the agent goes straight to the MCP tools: write DSL, **look at the inline render**, iterate, and only write files when you're happy. **No permission prompts anywhere in the design loop.**
+Start a new session afterwards. The first run downloads a signed, notarized binary (~68 MB) to `~/.vectorshop/current` — a one-time wait of a few seconds. After that, say "make me a poster" and the agent goes straight to the MCP tools: write DSL, **look at the inline render**, iterate, and only write files when you're happy. **No permission prompts anywhere in the design loop.**
 
-> How the no-prompt part works: the plugin ships a `PreToolUse` hook that auto-approves only its own seven tools (`list_categories` / `emit` / `get_example` / `get_skill` / `render` / `get_design` / `export`). It widens no other permission and never edits your `settings.json`; uninstalling the plugin removes it. The first six are read-only and in-memory; `render` keeps each design in memory under a `designId`, so later rounds send a small patch instead of the whole DSL. `export` writes the `.vsp` / `.png` / `.json` trio to the path given in the conversation, and refuses to overwrite an existing target.
+> How the no-prompt part works: the plugin ships a `PreToolUse` hook that auto-approves its own design and `symbol_*` tools. It widens no other permission and never edits your `settings.json`; uninstalling the plugin removes it. Rendering keeps each design in memory under a `designId`, so later rounds send a small patch instead of the whole DSL. `export` writes `.vsp` and PNG; `symbol_export` writes `.vsm` and transparent PNGs, with optional SVG. Both refuse to overwrite an existing target by default.
 
 - **Upgrade**: `/plugin update vectorshop-design@vectorshop-cli` (or turn on auto-update for this marketplace under `/plugin` → Marketplaces). The binary aligns itself on your next session.
 - **Uninstall**: `/plugin uninstall vectorshop-design@vectorshop-cli`, then optionally `rm -rf ~/.vectorshop` and remove the `/usr/local/bin/vectorshop` symlink if you ever created one.
@@ -53,7 +52,7 @@ codex plugin marketplace add chenyunguiMilook/vectorshop-cli
 codex plugin add vectorshop-design@vectorshop-cli
 ```
 
-Same first-run download (~34 MB to `~/.vectorshop/current`), and the same design loop. Codex auto-approves MCP tool calls by default, so this side ships no hooks at all — nothing to review, nothing to trust, no prompts.
+Same first-run download (~68 MB to `~/.vectorshop/current`), and the same design loop. Codex auto-approves MCP tool calls by default, so this side ships no hooks at all — nothing to review, nothing to trust, no prompts.
 
 - **Upgrade**: `codex plugin marketplace upgrade vectorshop-cli`. If `codex plugin list` still shows the old version afterwards, run `codex plugin add vectorshop-design@vectorshop-cli` again to pick up the refreshed marketplace snapshot. Either way the pinned binary aligns on your next session — the session you're in keeps running the version it started with, so an upgrade never interrupts you.
 - **Uninstall**: `codex plugin remove vectorshop-design`, then `codex plugin marketplace remove vectorshop-cli`.
@@ -79,7 +78,7 @@ Verify the install with `openclaw plugins inspect vectorshop-design`. In a codin
 
 > **The Claude Code, Codex, and OpenClaw plugins can live on the same machine.** They share one binary under `~/.vectorshop/`, so there is no reason to pick one. (This is a different question from the script-vs-plugin choice below, which really is either/or.)
 >
-> That sharing has one consequence worth knowing: `rm -rf ~/.vectorshop` during uninstall removes the binary **all three** plugins use. Any plugin you kept will simply re-download it (~34 MB) on its next run.
+> That sharing has one consequence worth knowing: `rm -rf ~/.vectorshop` during uninstall removes the binary **all three** plugins use. Any plugin you kept will simply re-download it (~68 MB) on its next run.
 
 ## Install via script (fallback, Claude Code only)
 
